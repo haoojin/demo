@@ -4,6 +4,10 @@
 
 
 # 常用
+## mac
+---
+1. `option + shift + F11` 音量微调
+
 ## tmux
 > 参考[tmux使用手册](https://juejin.im/post/59cf8ab26fb9a00a4c273352)
 - 窗口滚动 : `set -g mouse on`
@@ -46,3 +50,4 @@
 4. `git add & git commit --amend`
 5. `git rebase continue`
 6. `git push -f` 完成提交和修改(谨慎！！！！！！！)
+
