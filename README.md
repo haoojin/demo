@@ -44,4 +44,5 @@
 2. 修改 pick 为 edit 或其他命令，退出。此时使用`git log`发现后面最新的提交被隐藏
 3. 修改内容
 4. `git add & git commit --amend`
-5. `git rebase continue`完成提交和修改
+5. `git rebase continue`
+6. `git push -f` 完成提交和修改(谨慎！！！！！！！)
