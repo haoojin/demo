@@ -20,8 +20,6 @@
 
 ---
 
-```python
-git commit --amend -m 'xxx'
-git push -f
-```
+- git commit --amend -m 'xxx'
+- git push -f
 
