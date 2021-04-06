@@ -1,5 +1,1 @@
-1. 计算广告论文 [https://github.com/wzhe06/Ad-papers](https://github.com/wzhe06/Ad-papers)
-2. Cracking the Coding Interview, 5th Edition [https://github.com/careercup/ctci](https://github.com/careercup/ctci)
-3. proxyee-down [https://github.com/proxyee-down-org/proxyee-down](https://github.com/proxyee-down-org/proxyee-down)
-4. python 100天从入门到精通 [https://github.com/jackfrued/Python-100-Days](https://github.com/jackfrued/Python-100-Days)
-5. 996.ICU [https://github.com/996icu/996.ICU](https://github.com/996icu/996.ICU)
+# Code让生活变得更美好！
