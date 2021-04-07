@@ -82,8 +82,9 @@ def load_data():
 
 
 # 平均成本法返回收益，收益波动范围+3% ~ -3%，两位小数正常取整
-low_ratio, high_ratio = 0.97, 1.03
-def way_1(data):
+ratio = 0.03
+low_ratio, high_ratio = 1-ratio, 1+ratio
+def method_1(data):
     buy, avg_cost = [data[0]], data[0]
     # 下一次买入和卖出的价格
     next_buy, next_sell = round(avg_cost * low_ratio, 2), round(avg_cost * high_ratio, 2)
@@ -133,7 +134,7 @@ def way_1(data):
 
 
 # 以单日最大涨跌幅衡量
-def way_2(data):
+def method_2(data):
     buy, avg_cost = [data[0]], data[0]
     # 下一次买入和卖出的价格
     next_buy, next_sell = round(avg_cost * low_ratio, 2), round(avg_cost * high_ratio, 2)
@@ -182,6 +183,48 @@ def way_2(data):
     return earning
 
 
+# 网格交易，网格大小3%
+# 上一个交易日和下一个交易日 净值差距大于3%，涨就卖出，跌就买入
+def method_3(data):
+    buy, avg_cost = [data[0]], data[0]
+
+    earning = 0.0
+    costs = []
+    buy_count = sell_count = 0
+    # 交易模拟
+    for i in range(1, len(data)):
+        if (data[i] - data[i-1]) / data[i-1] > ratio:
+            while len(buy) > 1 and buy[0] < data[i] * (1-ratio):
+                earning += (data[i] - buy[0]) * 100
+                buy.pop(0)
+            sell_count += 1
+        elif (data[i] - data[i-1]) / data[i-1] < -ratio:
+            buy = sorted(buy + [data[i]])
+            buy_count += 1
+
+        costs.append(sum(buy))      # 当前交易日的持仓金额
+
+    # print(sorted(costs), sum(costs)//len(costs), buy)
+    # print('历史全部套牢金额：%s' % [round(v * 100, 1) for v in sorted(list(set(costs))) if v > 0])
+    avg_price = sum(costs)/len(costs)
+    print('平均套牢金额：%.2f' % (avg_price * 100))
+    print('\033[1m最大套牢金额：%d, 大于平均套牢金额的资金占有天数比例：%.2f%%\033[0m' % (max(costs) * 100, 100 * sum([1 if cost > avg_price else 0 for cost in costs])/len(costs)))
+    end_total_cost = int(sum(buy) * 100)
+    end_total_market = int(data[-1] * len(buy) * 100)
+    print('\033[1m期末持仓成本：%d\033[0m' % end_total_cost)
+    print('期末持仓市值：%d' % end_total_market)
+    # 如果期末卖出持有的份额的总盈利
+    end_total_earnings = end_total_market + earning - end_total_cost
+    print('\033[1m期末清仓收益率：%.2f%%\033[0m' % round(100 * end_total_earnings / end_total_cost, 2))
+    # 如果期末不卖出，只计算拿到手的盈利
+    print('期末持仓收益率：%.2f%%' % round(earning * 100 / end_total_cost, 2))
+    print('\033[1m平均套牢金额持仓收益率：%.2f%%\033[0m' % (end_total_earnings / avg_price))
+    print('\033[1m最大套牢金额持仓收益率：%.2f%%\033[0m' % (end_total_earnings / max(costs)))
+    print('平均交易次数：%.2f，交易总天数%d，其中买%d次，卖%d次' % (round((buy_count + sell_count) / len(data), 2), len(data), buy_count, sell_count))
+
+    return end_total_earnings
+
+
 """
 军工ETF: 512810
 银行ETF: 512800
@@ -194,7 +237,7 @@ H股ETF: 510900
 
 # 主程序
 if __name__ == "__main__":
-    data=get_fund_data('512690', per=49, sdate='2020-01-01', edate='2020-04-01')
+    data=get_fund_data('510880', per=49, sdate='2020-01-01', edate='2021-01-01')
     # 修改数据类型
     data['净值日期']=pd.to_datetime(data['净值日期'],format='%Y/%m/%d')
     data['单位净值']= data['单位净值'].astype(float)
@@ -204,5 +247,5 @@ if __name__ == "__main__":
     data=data.sort_values(by='净值日期',axis=0,ascending=True).reset_index(drop=True)
     data.to_csv("test.csv")
     data = load_data()
-    earnings = way_1(data)
+    earnings = method_1(data)
     print('收益：', round(earnings, 2))
