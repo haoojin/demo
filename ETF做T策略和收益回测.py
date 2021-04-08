@@ -237,7 +237,7 @@ H股ETF: 510900
 
 # 主程序
 if __name__ == "__main__":
-    data=get_fund_data('510880', per=49, sdate='2020-01-01', edate='2021-01-01')
+    data=get_fund_data('512800', per=49, sdate='2020-01-01', edate='2021-01-01')
     # 修改数据类型
     data['净值日期']=pd.to_datetime(data['净值日期'],format='%Y/%m/%d')
     data['单位净值']= data['单位净值'].astype(float)

@@ -1,5 +1,4 @@
 # coding=utf8
-
 import csv
 import requests
 from bs4 import BeautifulSoup
@@ -8,8 +7,6 @@ import numpy as np
 import pandas as pd
 from collections import defaultdict
 from datetime import datetime
-
-file_name = 'test.csv'
 
 # 抓取网页
 def get_url(url, params=None, proxies=None):
@@ -115,23 +112,21 @@ def method_1(data):
 
 
 """
-军工ETF: 512810
-银行ETF: 512800
-白酒ETF: 512690
-上证红利ETF: 510880
-地产ETF: 512200
-H股ETF: 510900
-恒生ETF: 159920
+为了提升资金利用率，分别选择不同市场中的ETF(跌涨不同时，资金互补)
+两个美国的(五星+：纳斯达克、标普500)、
+两个香港的(五星：恒生、H股)、
+三四个中国的(四星-：银行、上证红利、地产、白酒)
 """
 
 # 主程序
 ETFs = {
-    '512800': '银行ETF',
-    '510880': '上证红利ETF',
-    '512200': '地产ETF',
+    '513500': '标普500ETF',
+    '160213': '纳斯达克ETF',
     '159920': '恒生ETF',
-    '501301': '香港大盘',
     '510900': 'H股ETF',
+    '512800': '银行ETF',
+    '510880': '红利ETF',  # 上证红利
+    '512200': '地产ETF',
 }
 dates_6 = [
         ('2017-10-01', '2018-04-01'), ('2018-01-01', '2018-07-01'), ('2018-04-01', '2018-10-01'), ('2018-07-01', '2019-01-01'),
@@ -140,63 +135,47 @@ dates_6 = [
         ('2020-10-01', '2021-04-01'),
         ]
 dates_12 = [('2017-10-01', '2018-10-01'), ('2018-04-01', '2019-04-01'), ('2018-10-01', '2019-10-01'), ('2019-04-01', '2020-04-01'), ('2019-10-01', '2020-10-01'), ('2020-04-01', '2021-04-01'),]
-if __name__ == "__main__":
-    etf_data_dic = {}
-    for etf_code in ETFs:
-        data = get_fund_data(etf_code, per=49, sdate='2017-10-01', edate='2021-04-01')
-        # 修改数据类型
-        data['净值日期']=pd.to_datetime(data['净值日期'],format='%Y/%m/%d')
-        data['单位净值']= data['单位净值'].astype(float)
-        data['累计净值']=data['累计净值'].astype(float)
-        data['日增长率']=data['日增长率'].str.strip('%').astype(float)
-        # 按照日期升序排序并重建索引
-        data=data.sort_values(by='净值日期',axis=0,ascending=True).reset_index(drop=True)
 
-        etf_data_dic[etf_code] = data[['净值日期', '单位净值']]
-        
-    print('获取数据完毕，开始进行数据分析...')
-    print('投资年限为六个月：')
-    results = defaultdict(list)
-    for etf_code in ETFs:
-        df = etf_data_dic[etf_code]
-        for date in dates_6:
-            curr_data = df.loc[(df['净值日期'] >= datetime.strptime(date[0], "%Y-%m-%d"))&(df['净值日期'] < datetime.strptime(date[1], "%Y-%m-%d"))]['单位净值'].tolist()
-            rate_of_return = method_1(curr_data)
-            results[ETFs[etf_code]].append(round(rate_of_return, 2))
+"""__main__() function:"""
+etf_data_dic = {}
+for etf_code in ETFs:
+    data = get_fund_data(etf_code, per=49, sdate='2017-10-01', edate='2021-04-01')
+    # 修改数据类型
+    data['净值日期']=pd.to_datetime(data['净值日期'],format='%Y/%m/%d')
+    data['单位净值']= data['单位净值'].astype(float)
+    data['累计净值']=data['累计净值'].astype(float)
+    data['日增长率']=data['日增长率'].str.strip('%').astype(float)
+    # 按照日期升序排序并重建索引
+    data=data.sort_values(by='净值日期',axis=0,ascending=True).reset_index(drop=True)
 
-    for key, value in sorted(results.items(), key=lambda x: x[0]):
-        print("%s,%s" % (key, ','.join([str(v) for v in value])))
+    etf_data_dic[etf_code] = data[['净值日期', '单位净值']]
+    
+print('获取数据完毕，开始进行数据分析...')
+print('投资年限为六个月：')
+results = defaultdict(list)
+for etf_code in ETFs:
+    df = etf_data_dic[etf_code]
+    for date in dates_6:
+        curr_data = df.loc[(df['净值日期'] >= datetime.strptime(date[0], "%Y-%m-%d"))&(df['净值日期'] < datetime.strptime(date[1], "%Y-%m-%d"))]['单位净值'].tolist()
+        rate_of_return = method_1(curr_data)
+        results[ETFs[etf_code]].append(round(rate_of_return, 2))
 
-    print('投资年限为一年：')
-    results = defaultdict(list)
-    for etf_code in ETFs:
-        df = etf_data_dic[etf_code]
-        for date in dates_12:
-            curr_data = df.loc[(df['净值日期'] >= datetime.strptime(date[0], "%Y-%m-%d"))&(df['净值日期'] < datetime.strptime(date[1], "%Y-%m-%d"))]['单位净值'].tolist()
-            rate_of_return = method_1(curr_data)
-            results[ETFs[etf_code]].append(round(rate_of_return, 2))
+for key, value in sorted(results.items(), key=lambda x: x[0]):
+    print("%s\t\t[%s], 平均值:%.2f%%" % (key, ','.join([str(v) for v in value]), sum(value)/len(value)))
 
-    for key, value in sorted(results.items(), key=lambda x: x[0]):
-        print("%s,%s" % (key, ','.join([str(v) for v in value])))
+print('投资年限为一年：')
+results = defaultdict(list)
+for etf_code in ETFs:
+    df = etf_data_dic[etf_code]
+    for date in dates_12:
+        curr_data = df.loc[(df['净值日期'] >= datetime.strptime(date[0], "%Y-%m-%d"))&(df['净值日期'] < datetime.strptime(date[1], "%Y-%m-%d"))]['单位净值'].tolist()
+        rate_of_return = method_1(curr_data)
+        results[ETFs[etf_code]].append(round(rate_of_return, 2))
+
+for key, value in sorted(results.items(), key=lambda x: x[0]):
+    print("%s\t\t[%s], 平均值:%.2f%%" % (key, ','.join([str(v) for v in value]), sum(value)/len(value)))
 
 
-"""
-获取数据完毕，开始进行数据分析...
-投资年限为六个月：
-H股ETF,-0.96,-3.35,17.77,16.23,23.02,16.06,10.68,14.92,6.19,12.52,-17.73,10.68,16.73
-上证红利ETF,-6.13,-13.14,13.9,4.94,17.4,9.48,8.08,11.24,-14.18,-0.49,8.99,9.46,14.47
-地产ETF,0.47,-33.08,-7.87,16.94,33.99,1.52,1.03,14.14,17.22,15.01,9.44,-10.52,13.88
-恒生ETF,0.48,8.47,6.36,6.61,21.63,20.0,12.42,18.64,-7.41,6.76,-13.38,10.45,17.55
-银行ETF,-14.02,-24.32,19.15,2.88,21.47,22.84,8.7,9.88,-9.29,-0.93,9.43,22.0,31.46
-香港大盘,6.52,9.23,13.31,13.56,20.91,17.85,12.4,17.43,1.3,4.74,-19.57,14.6,16.42
-投资年限为一年：
-H股ETF,14.56,33.76,33.91,19.24,6.74,28.61
-上证红利ETF,8.49,20.22,22.38,-5.7,19.0,32.04
-地产ETF,-29.22,31.1,9.7,9.21,39.32,-5.57
-恒生ETF,7.17,24.43,33.4,16.16,1.22,24.65
-银行ETF,12.98,39.83,27.9,1.25,22.48,51.51
-香港大盘,22.73,32.63,32.48,21.56,0.04,30.85
-"""
 
 
 
